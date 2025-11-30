@@ -77,7 +77,7 @@ export default function Home() {
     const fetchFeaturedProperties = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch("/api/properties/featured?limit=6");
+        const response = await fetch("/api/featured?limit=6");
         const data = await response.json();
         
         if (data.success) {
@@ -99,6 +99,7 @@ export default function Home() {
       return; // Don't search if no filters selected
     }
 
+    
     try {
       setIsSearching(true);
       setIsSearchModalOpen(true);
@@ -109,17 +110,18 @@ export default function Home() {
         params.append("city", searchLocation);
       }
       
-      if (searchPropertyType && searchPropertyType !== "All") {
+      if (searchPropertyType && searchPropertyType !== "all") {
         params.append("propertyType", searchPropertyType);
       }
       
       params.append("limit", "20");
       
       const response = await fetch(`/api/properties?${params}`);
+      console.log(`/api/properties?${params}`)
       const data = await response.json();
-      
+      console.log(data)
       if (data.success) {
-        setSearchResults(data.data.properties);
+        setSearchResults(data.data);
       }
     } catch (error) {
       console.error("Error searching properties:", error);
@@ -130,13 +132,14 @@ export default function Home() {
 
   // Handle filter change - updates main grid (not modal)
   const handleFilterChange = async (filterType: string) => {
+    console.log("filterType", filterType);
     setSelectedFilter(filterType);
     
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
       
-      if (filterType !== "All") {
+      if (filterType !== "all") {
         params.append("propertyType", filterType);
       }
       
@@ -144,9 +147,8 @@ export default function Home() {
       
       const response = await fetch(`/api/properties?${params}`);
       const data = await response.json();
-      
       if (data.success) {
-        setFeaturedProperties(data.data.properties);
+        setFeaturedProperties(data.data);
       }
     } catch (error) {
       console.error("Error filtering properties:", error);
@@ -385,9 +387,9 @@ export default function Home() {
               {["All", "Apartment", "Villa", "Studio", "Bungalow", "Duplex", "House"].map((item) => (
                 <button 
                   key={item}
-                  onClick={() => handleFilterChange(item)}
+                  onClick={() => handleFilterChange(item.toLowerCase())}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap ${
-                    selectedFilter === item
+                    selectedFilter === item.toLowerCase()
                     ? "bg-black text-white dark:bg-white dark:text-black shadow-lg scale-105" 
                     : "bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600"
                   }`}

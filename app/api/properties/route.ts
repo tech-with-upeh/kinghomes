@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { propertyService } from "@/backend/services/propertyService";
+import { createClient } from "@/utils/supabase/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,19 +24,57 @@ export async function GET(request: NextRequest) {
       limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : 10,
     };
 
-    // Get properties
-    const result = await propertyService.getProperties(filters, pagination);
+    const from = (pagination.page - 1) * pagination.limit;
+    const to = from + pagination.limit - 1;
+
+    // Build Supabase query
+    let query = createClient()
+      .from("listings")
+      .select("*")
+      .range(from, to);
+
+    if (filters.propertyType === "all" || filters.propertyType === "All") {
+      delete filters.propertyType;
+    }
+
+    if (filters.propertyType) query = query.eq("propertyType", filters.propertyType);
+
+    if (filters.city) {
+      query = query.eq("location->>city", filters.city);
+    }
+    if (filters.state) {
+      query = query.eq("location->>state", filters.state);
+    }
+    //if (filters.city) query = query.eq("city", filters.city);
+    if (filters.featured !== undefined) query = query.eq("featured", filters.featured);
+    if (filters.status) query = query.eq("status", filters.status);
+
+    if (filters.minPrice) query = query.gte("price", filters.minPrice);
+    if (filters.maxPrice) query = query.lte("price", filters.maxPrice);
+
+    if (filters.bedrooms) query = query.gte("bedrooms", filters.bedrooms);
+    if (filters.bathrooms) query = query.gte("bathrooms", filters.bathrooms);
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("Error fetching properties:", error);
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      data: result,
+      data,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching properties:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to fetch properties",
+        error: error.message,
       },
       { status: 500 }
     );
