@@ -29,6 +29,8 @@ import {
 import { Dancing_Script } from "@next/font/google";
 import { useRef, useState, useEffect } from "react";
 import { Property } from "@/backend/data/properties";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation";
 
 const ital = Dancing_Script({
   subsets: ["latin"],
@@ -66,11 +68,28 @@ export default function Home() {
   const [searchLocation, setSearchLocation] = useState("");
   const [searchPropertyType, setSearchPropertyType] = useState("All");
   const [selectedFilter, setSelectedFilter] = useState("All");
+  const [isLoggedin, setLogin] = useState(true);
   
   // Search modal state
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Property[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const router = useRouter()
+
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        setLogin(true)
+      } else {
+        setLogin(false)
+      }
+    }
+    checkUser()
+  }, [])
 
   // Fetch featured properties on component mount
   useEffect(() => {
@@ -117,9 +136,9 @@ export default function Home() {
       params.append("limit", "20");
       
       const response = await fetch(`/api/properties?${params}`);
-      console.log(`/api/properties?${params}`)
+      
       const data = await response.json();
-      console.log(data)
+      
       if (data.success) {
         setSearchResults(data.data);
       }
@@ -132,7 +151,6 @@ export default function Home() {
 
   // Handle filter change - updates main grid (not modal)
   const handleFilterChange = async (filterType: string) => {
-    console.log("filterType", filterType);
     setSelectedFilter(filterType);
     
     try {
@@ -161,9 +179,6 @@ export default function Home() {
     if (!scrollRef.current) return;
 
     const amount = 50;
-
-    console.log(scrollRef.current.scrollWidth);
-    console.log(scrollRef.current.getBoundingClientRect().right);
     if (direction == "left") {
       if (scrollRef.current.scrollLeft > 0) {
         scrollRef.current.scrollTo({
@@ -216,14 +231,19 @@ export default function Home() {
               <a href="#" className="hover:text-white transition-colors">Contact</a>
             </div>
 
-            <div className="hidden md:flex items-center gap-4">
+            {
+              isLoggedin ? <div className="hidden md:flex items-center gap-4">
+                <Link href="/dashboard" className="px-5 py-2 rounded-full text-white font-medium hover:bg-white/10 transition-all">
+                Dashboard
+              </Link>
+              </div> : <div className="hidden md:flex items-center gap-4">
                <Link href="/auths/login" className="px-5 py-2 rounded-full text-white font-medium hover:bg-white/10 transition-all">
                 Login
               </Link>
               <Link href="/auths/register" className="px-5 py-2 rounded-full bg-white text-black font-medium hover:bg-gray-100 transition-all shadow-lg">
                 Sign Up
               </Link>
-            </div>
+            </div>}
 
             {/* Mobile Menu Button */}
             <button className="md:hidden text-white" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -240,14 +260,19 @@ export default function Home() {
                 {item}
               </a>
             ))}
-            <div className="flex flex-col gap-3 mt-4">
+
+            {isLoggedin ? <div className="flex flex-col gap-3 mt-4">
+              <Link href="/dashboard" className="text-white font-medium text-center py-2 border border-white/20 rounded-full">
+                Dashboard
+              </Link>
+            </div> : <div className="flex flex-col gap-3 mt-4">
               <Link href="/auths/login" className="text-white font-medium text-center py-2 border border-white/20 rounded-full">
                 Log In
               </Link>
               <Link href="/auths/register" className="bg-white text-black font-bold text-center py-2 rounded-full">
                 Sign Up
               </Link>
-            </div>
+            </div>}
           </div>
         )}
 
@@ -296,9 +321,9 @@ export default function Home() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.8 }}
             >
-              <Link href="/auths/register">
+              <Link href={isLoggedin ? "/dashboard" : "/auths/register"}>
                 <div className="group relative px-8 py-4 bg-white text-black rounded-full font-semibold text-lg shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 cursor-pointer overflow-hidden">
-                  <span className="relative z-10">Get Started</span>
+                  <span className="relative z-10">{isLoggedin ? "Dashboard" : "Get Started"}</span>
                   <div className="absolute inset-0 bg-gray-100 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 ease-out" />
                 </div>
               </Link>

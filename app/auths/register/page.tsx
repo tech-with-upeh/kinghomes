@@ -3,13 +3,29 @@ import Link from "next/link";
 import Image from "next/image";
 import bg from "@/public/bg.jpg"; // Assuming this exists as per home page
 import { XIcon } from "@phosphor-icons/react";
-import { useState } from "react";
-import { h1 } from "framer-motion/client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Register() {
+  const router = useRouter();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [msg, setMsg] = useState("");
+
+  const supabase = createClient()
+      
+        useEffect(() => {
+          const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+              router.push("/dashboard")
+            }
+          }
+          checkUser()
+        }, [])
+        
   async function CreateUser(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -18,9 +34,9 @@ export default function Register() {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
+    const name = formData.get("name")?.toString() || "";
+    const email = formData.get("email")?.toString() || "";
+    const password = formData.get("password")?.toString() || "";
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -38,7 +54,10 @@ export default function Register() {
       setError(true);
     }
     setMsg(data.message || data.error);
-    console.log(data);
+    if(res.ok)  {
+      router.push(`/auths/confirm?email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`);
+
+    }
   }
 
   return (
@@ -66,11 +85,29 @@ export default function Register() {
           {
             msg != "" && (
               <div className="w-full flex items-center justify-center">
-                <div className={`flex items-center justify-around self-center p-3 gap-10 ${error ? "bg-red-700" : "bg-green-700"} h-14 shadow-2xl w-fit rounded-2xl`}>
-                  <XIcon size={32} color="white" />
-                  <h1 className="text-white">{msg}</h1>
-                </div>
-              </div>
+  <div
+    className={`
+      flex items-center gap-4 px-6 py-4
+      rounded-2xl shadow-xl border backdrop-blur-md
+      animate-[fadeInUp_0.35s_ease]
+      ${error ? "border-red-400/40 bg-red-500/20" : "border-green-400/40 bg-green-500/20"}
+    `}
+  >
+    <div
+      className={`
+        w-10 h-10 flex items-center justify-center rounded-xl
+        ${error ? "bg-red-600/80" : "bg-green-600/80"}
+      `}
+    >
+      <XIcon size={22} color="white" />
+    </div>
+
+    <h1 className="text-white text-lg font-medium tracking-wide">
+      {msg}
+    </h1>
+  </div>
+</div>
+
             )
           }
           

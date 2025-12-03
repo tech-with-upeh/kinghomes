@@ -1,14 +1,30 @@
 "use client";
-import  { useState } from "react";
+import  { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import bg from "@/public/bg.jpg";
 import { XIcon } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Login() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [msg, setMsg] = useState("");
+
+    const supabase = createClient()
+    
+      useEffect(() => {
+        const checkUser = async () => {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            router.push("/dashboard")
+          }
+        }
+        checkUser()
+      }, [])
+
     async function LoginUser(e: React.FormEvent) {
       e.preventDefault();
       setLoading(true);
@@ -35,7 +51,9 @@ export default function Login() {
         setError(true);
       }
       setMsg(data.message || data.error);
-      console.log(data);
+      if (data.message) {
+        router.push("/dashboard");
+      }
     }
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
@@ -62,11 +80,29 @@ export default function Login() {
           {
                       msg != "" && (
                         <div className="w-full flex items-center justify-center">
-                          <div className={`flex items-center justify-around self-center p-3 gap-10 ${error ? "bg-red-700" : "bg-green-700"} h-14 shadow-2xl w-fit rounded-2xl`}>
-                            <XIcon size={32} color="white" />
-                            <h1 className="text-white">{msg}</h1>
-                          </div>
-                        </div>
+  <div
+    className={`
+      flex items-center gap-4 px-6 py-4
+      rounded-2xl shadow-xl border backdrop-blur-md
+      animate-[fadeInUp_0.35s_ease]
+      ${error ? "border-red-400/40 bg-red-500/20" : "border-green-400/40 bg-green-500/20"}
+    `}
+  >
+    <div
+      className={`
+        w-10 h-10 flex items-center justify-center rounded-xl
+        ${error ? "bg-red-600/80" : "bg-green-600/80"}
+      `}
+    >
+      <XIcon size={22} color="white" />
+    </div>
+
+    <h1 className="text-white text-lg font-medium tracking-wide">
+      {msg}
+    </h1>
+  </div>
+</div>
+
                       )
                     }
           <div className="space-y-2">

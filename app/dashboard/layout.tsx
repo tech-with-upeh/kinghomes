@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import bg from "@/public/bg.jpg";
 import logo from "@/public/kglogo.png";
 import {
@@ -17,6 +17,7 @@ import {
   TrendUpIcon,
   ChatCircleDotsIcon
 } from "@phosphor-icons/react";
+import { createClient } from "@/utils/supabase/client"
 
 export default function DashboardLayout({
   children,
@@ -44,6 +45,23 @@ export default function DashboardLayout({
     { name: "Clients", href: "/dashboard/clients", icon: UsersIcon },
     { name: "Settings", href: "/dashboard/settings", icon: GearIcon },
   ];
+
+  const supabase = createClient();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    const res = await fetch("/api/auth/logout", { method: "POST" });
+  const data = await res.json();
+
+  console.log(data.data)
+  if (data.error) {
+    console.log("Logout error:", data.error);
+    return;
+  }
+
+  // Session is cleared server-side, now redirect
+  router.push("/");
+  }
 
   return (
     <div className="relative min-h-screen w-full font-sans overflow-hidden bg-black">
@@ -109,12 +127,12 @@ export default function DashboardLayout({
 
           {/* User Profile / Logout */}
           <div className="p-4 border-t border-white/10">
-            <Link href={"/"}>
-                <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all">
+        
+                <button className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all" onClick={handleSignOut}>
               <SignOutIcon size={20} />
               <span className="font-medium">Sign Out</span>
             </button>
-            </Link>
+            
           </div>
         </aside>
 
@@ -226,11 +244,11 @@ export default function DashboardLayout({
                       <div className="h-px bg-white/10 my-2" />
                       
 
-                      <Link href={"/auths/login"}>
-                        <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left">
+                      
+                        <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors text-left" onClick={handleSignOut}>
                             <SignOutIcon size={16} /> Sign Out
                         </button>
-                      </Link>
+                      
                       
                     </div>
                   </>

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: authError.message }, { status: 400 });
         }
         
-        return NextResponse.json({ user: authData.user });
+        return NextResponse.json({ user: authData.user, message: "Login successful" });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
