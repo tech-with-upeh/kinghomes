@@ -3,11 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import bg from "@/public/bg.jpg";
 import { XIcon } from "@phosphor-icons/react";
-import { useRef, useState } from "react";
+import { useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-
-function page() {
+function ConfirmContent() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
     const [msg, setMsg] = useState("");
@@ -188,4 +187,10 @@ function page() {
   )
 }
 
-export default page
+export default function ConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConfirmContent />
+    </Suspense>
+  );
+}
